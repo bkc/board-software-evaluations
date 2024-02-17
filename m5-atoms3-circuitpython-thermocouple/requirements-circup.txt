@@ -1,0 +1,2 @@
+adafruit_bus_device
+adafruit_mcp9600
