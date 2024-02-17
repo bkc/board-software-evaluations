@@ -2,7 +2,7 @@
 
 Evaluation of M5 Atom S3 with Circuit Python Reading a Thermocouple over I2C from Adafruit MCP9601
 
-##Project Objectives
+## Project Objectives
 
 - Confirm that I2C can be configured on the Grove port
 - Determine how to read an MCP9601 over I2C
@@ -31,7 +31,7 @@ The M5 Atom S3 is based on an Espressif ESP32-S3 microcontroller. Pins G1 and G2
 
 
 
-##Install CircuitPython and UF2 Bootloader
+## Install CircuitPython and UF2 Bootloader
 
 CircuitPython has alpha support for the [Atom S3](https://circuitpython.org/board/m5stack_atoms3/)
 
@@ -169,5 +169,4 @@ while True:
     print(f"ambient temp {mcp.ambient_temperature:.1f} C, thermocouple temp {mcp.temperature:.1f} C")
     time.sleep(5)
 ```
-
 
