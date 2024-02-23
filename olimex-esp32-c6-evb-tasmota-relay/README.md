@@ -210,5 +210,49 @@ In the above image, optocoupler input 1 (GPIO 1) has been activated. The other i
 
 ## Reporting OptoCoupler Inputs
 
+I want the current status of the OptoCoupler inputs to be reported over MQTT when:
 
+- the input changes state
+- periodically
+
+Additionally some of the inputs should increment a counter so that its possible to track how long an input has been activated during a given period of time.
+
+### Using Switch Component Type
+
+Rather than using `INPUT` type, try changing the optocouplers to `SWITCH` component type
+
+The optocoupler inputs are already wired to a pull-up resister
+
+![image-20240222165502404](assets/image-20240222165502404.png)
+
+
+
+Therefore the component type should be `SWITCH_N` (non-pull-up)
+
+Additionally, the relays should not change state when the inputs change state. There are two different ways to do this:
+
+- issue `SetOption114 1`  to decouple all switches from relays
+- issue `SwitchMode<x> 15` to decouple the selected switch from any relays
+
+
+
+The following Tasmota configuration commands:
+
+```shell
+SwitchMode1 15
+SwitchText1 input_1
+StateText1 0
+StateText2 1
+```
+
+Causes the following MQTT messages to be sent when the optocoupler is activated, then de-activated:
+
+```json
+23:07:38.197 MQT: tele/tasmota_41A9EC/SENSOR = {"Time":"2024-02-22T23:07:38","input_1":"0"}
+23:07:44.468 MQT: tele/tasmota_41A9EC/SENSOR = {"Time":"2024-02-22T23:07:44","input_1":"1"}
+```
+
+### Using Counter Component Type
+
+Tasmota also supports a `Counter_n` component type, lets see how that works
 
