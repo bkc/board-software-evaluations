@@ -166,7 +166,9 @@ I do not expect to send metrics from the host system to Grafana cloud, therefore
 
 Create a new token for the agent to use. Go to Connections / Add New Connection. Choose `Hosted Prometheus metrics` and click `Create new config`
 
-Enter an access policy token name, then click Create. A sample agent.yaml file will be generated:
+Enter an access policy token name, then click Create. A sample agent.yaml file will be generated.
+
+Adjust the sample agent.yaml file as desired, for example to add `labeldrop` actions to cut down on the metrics cardinality by reducing the number of labels sent to prometheus.
 
 ```yaml
 metrics:
@@ -178,6 +180,13 @@ metrics:
       - job_name: node
         static_configs:
         - targets: ['192.168.XX.XX:9641']
+        metric_relabel_configs:
+        - regex: topic
+          action: labeldrop
+        - regex: job
+          action: labeldrop
+        - regex: instance
+          action: labeldrop
     remote_write:
       - url: https://prometheus-prod-01-prod-us-east-0.grafana.net/api/prom/push
         basic_auth:

@@ -2,8 +2,13 @@
 
 Evaluate the Olimex ESP32-C6-EVB board using CircuitPython
 
-- [ ] Determine how to activate each relay
-- [ ] Determine how to read the status of each optocoupler
+Investigate how to:
+
+- [x] activate each relay
+- [x] read the current status of each optocoupler
+- [x] count pulses on an optocoupler input
+- [ ] limit relay on time
+- [ ] report total time an optocoupler input has been active
 
 
 
@@ -219,7 +224,7 @@ Additionally some of the inputs should increment a counter so that its possible 
 
 ### Using Switch Component Type
 
-Rather than using `INPUT` type, try changing the optocouplers to `SWITCH` component type
+Rather than using `INPUT` type, try changing the optocouplers to `SWITCH` or `SWITCH_N` component type
 
 The optocoupler inputs are already wired to a pull-up resister
 
@@ -227,7 +232,7 @@ The optocoupler inputs are already wired to a pull-up resister
 
 
 
-Therefore the component type should be `SWITCH_N` (non-pull-up)
+Therefore the component type probably should be `SWITCH_N` (non-pull-up).
 
 Additionally, the relays should not change state when the inputs change state. There are two different ways to do this:
 
@@ -239,7 +244,7 @@ Additionally, the relays should not change state when the inputs change state. T
 The following Tasmota configuration commands:
 
 ```shell
-SwitchMode1 15
+SwitchMode1 16
 SwitchText1 input_1
 StateText1 0
 StateText2 1
@@ -254,5 +259,91 @@ Causes the following MQTT messages to be sent when the optocoupler is activated,
 
 ### Using Counter Component Type
 
-Tasmota also supports a `Counter_n` component type, lets see how that works
+Tasmota also supports  `Counter_n`  and `Counter` component types, lets see how that works
+
+Temporarily reconfigure Optocoupler input \#2 as type `Counter` number 1
+
+```shell
+CounterType1 0
+CounterDebounce 100
+```
+
+Activate the input several times to observer counter behaviour
+
+```shell
+18:14:28.566 MQT: tele/tasmota_41A9EC/SENSOR = {"Time":"2024-02-24T18:14:28","input_1":"1","COUNTER":{"C1":0}}
+18:14:38.608 MQT: tele/tasmota_41A9EC/SENSOR = {"Time":"2024-02-24T18:14:38","input_1":"1","COUNTER":{"C1":6}}
+```
+
+The counter can be remotely reset via MQTT message
+
+```
+cmnd/tasmota_41A9EC/counter1 => 0
+```
+
+## Limiting Relay on Time
+
+I want the relays to automatically turn off  on their own if an MQTT "on" command has not been received within a given time period.
+
+The `PulseTime` option can be used for this, e.g automatically turn off the relay after 5 seconds:
+
+```shell
+PulseTime1 105
+```
+
+Try sending an MQTT command `cmnd/tasmota_41A9EC/power1` = `1`
+
+The relay turns on, then off after about 8 seconds
+
+```shell
+18:50:41.636 MQT: stat/tasmota_41A9EC/RESULT = {"POWER1":"1"}
+18:50:41.638 MQT: stat/tasmota_41A9EC/POWER1 = 1
+18:50:52.207 MQT: stat/tasmota_41A9EC/RESULT = {"POWER1":"0"}
+```
+
+Test to ensure the pulsetime resets every time the command is set, by sending the `power1` command every  4 to 5 seconds
+
+```shell
+18:52:44.755 MQT: stat/tasmota_41A9EC/RESULT = {"POWER1":"1"}
+18:52:44.756 MQT: stat/tasmota_41A9EC/POWER1 = 1
+18:52:49.416 MQT: stat/tasmota_41A9EC/RESULT = {"POWER1":"1"}
+18:52:49.418 MQT: stat/tasmota_41A9EC/POWER1 = 1
+18:52:53.677 MQT: stat/tasmota_41A9EC/RESULT = {"POWER1":"1"}
+18:52:53.679 MQT: stat/tasmota_41A9EC/POWER1 = 1
+18:52:57.638 MQT: stat/tasmota_41A9EC/RESULT = {"POWER1":"1"}
+18:52:57.639 MQT: stat/tasmota_41A9EC/POWER1 = 1
+18:53:02.248 MQT: stat/tasmota_41A9EC/RESULT = {"POWER1":"1"}
+18:53:02.251 MQT: stat/tasmota_41A9EC/POWER1 = 1
+18:53:06.866 MQT: stat/tasmota_41A9EC/RESULT = {"POWER1":"1"}
+18:53:06.868 MQT: stat/tasmota_41A9EC/POWER1 = 1
+18:53:10.826 MQT: stat/tasmota_41A9EC/RESULT = {"POWER1":"1"}
+18:53:10.829 MQT: stat/tasmota_41A9EC/POWER1 = 1
+18:53:14.536 MQT: stat/tasmota_41A9EC/RESULT = {"POWER1":"1"}
+18:53:14.539 MQT: stat/tasmota_41A9EC/POWER1 = 1
+18:53:19.747 MQT: stat/tasmota_41A9EC/RESULT = {"POWER1":"1"}
+18:53:19.750 MQT: stat/tasmota_41A9EC/POWER1 = 1
+18:53:24.665 MQT: stat/tasmota_41A9EC/RESULT = {"POWER1":"1"}
+18:53:24.667 MQT: stat/tasmota_41A9EC/POWER1 = 1
+18:53:28.691 MQT: stat/tasmota_41A9EC/RESULT = {"POWER1":"1"}
+18:53:28.694 MQT: stat/tasmota_41A9EC/POWER1 = 1
+18:53:39.207 MQT: stat/tasmota_41A9EC/RESULT = {"POWER1":"0"}
+18:53:39.210 MQT: stat/tasmota_41A9EC/POWER1 = 0
+```
+
+It works as expected
+
+
+
+## Tasmota Configuration Summary
+
+These initial setup options were used:
+
+- SetOption114 1 - Detach switches from relays and send MQTT messages instead
+- TelePeriod 10 - send MQTT status updates every 10 seconds instead of once every 300 seconds
+- LedState 7 - show power state and MQTT messages as a LED blink
+- SwitchMode1 16 - inverted send only an MQTT message on switch change
+- StateText1 0 - when off, send "0" instead of "OFF"
+- StateText2 1 - when on, send "1" instead on "ON"
+
+
 

@@ -220,16 +220,16 @@ Topic: tele/tasmota_1285B8/SENSOR QoS: 0
 
 I would prefer that the temperature sensor device name `ATC226754` be included in the mqtt topic.
 
-Issue this command to insert the device BLE name into the topic:
+Issue this command to insert the device BLE name into the topic, and to place the data fields in the root of the payload body instead of nested under the sensor name:
 
 ```
-MI32Option6 2
+MI32Option6 1
 ```
 
 The format of MQTT messages now includes:
 
 ```shell
-Topic: tele/tasmota_ble/ATC226754 QoS: 0
-{"Time":"2024-02-18T04:42:29","ATC226754":{"mac":"a4c138226754","Temperature":23.3,"Humidity":28.8,"DewPoint":4.1,"Btn":0,"Battery":74,"RSSI":-48},"TempUnit":"C"}
+Topic: tele/tasmota_ble/spare QoS: 0
+{"Time":"2024-02-25T22:27:27","alias":"spare","mac":"a4c138cf3500","Temperature":16.3,"Humidity":37.0,"DewPoint":1.6,"Btn":0,"Battery":100,"RSSI":-95,"TempUnit":"C"}
 ```
 
